@@ -14,7 +14,8 @@ object Main {
     /*Seems like it is not a good way to realloc array every time. Greedy solution*/
     for (line <- source.getLines())
         sequence = sequence :+ line
-    val listed_source = sequence.map(string => string.split("\t")).toList
+    val init_source = sequence.map(string => string.split("\t").slice(1,3))
+//    val count_all_source = ini
     source.close()
   }
 
