@@ -1,4 +1,4 @@
-import java.io.BufferedReader
+import java.io.{BufferedReader, BufferedWriter, File, FileWriter}
 import scala.io.{BufferedSource, Source}
 import scala.io.Source.fromFile
 
@@ -18,9 +18,10 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     var sequence = Array[String]()
-    val source = Source.fromFile(local_path)
+    val source = Source.fromFile(local_path) // source file
     var result1: Array[Int] = Array()
     var result2: Array[Int] = Array()
+    val file : File = new File("lab01.json") // dest file
 
     /*Seems like it is not a good way to realloc array every time. Greedy solution*/
     for (line <- source.getLines())
@@ -35,8 +36,11 @@ object Main {
     val exclusive_rait = init_source.filter(_.apply(0) == exclusive_number)
       .flatMap(string => string.slice(1, 2)).map(_.toInt)
     result2 = counter(exclusive_rait)
-
+    val writer: BufferedWriter = new BufferedWriter(new FileWriter(file))
+    writer.write("{\"hist_film\":[" + result2(0).toString + "," + result2(1).toString + ","
+    + result2(2).toString + "," + result2(3).toString + "," + result2(4).toString + "],\"hist_all\":["
+      + result1(0).toString + "," + result1(1).toString + ","
+      + result1(2).toString + "," + result1(3).toString + "," + result1(4).toString + "]}")
+    writer.close()
   }
-
-
 }
