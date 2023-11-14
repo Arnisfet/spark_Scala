@@ -3,6 +3,7 @@ import org.apache.spark.sql.functions.{col, explode, from_json, lit, split}
 import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
+
 object Main {
   private val local_path = "extra\\"
   private val cluster_path = ""
@@ -35,6 +36,13 @@ object Main {
         StructField("url", StringType)
       )
     )
-    val domains = spark.read.schema(logsSchema).option("delimeter", "\t").csv(local_path + logs)
+    val domains = spark.read.schema(logsSchema).option("delimiter", "\t").csv(local_path + logs)
+    val filtered_domains = domains.na.drop()
+      .filter(col("url")
+        .contains("http") || col("url").contains("https"))
+    val decoded_domain = filtered_domains
+      .selectExpr("*", "reflect('java.net.URLDecoder','decode', url, 'utf-8') as newcol")
+//    val count = decoded_domain.count()
+//    println(count)
     }
 }
