@@ -1,5 +1,5 @@
 import org.apache.spark.sql.catalyst.dsl.expressions.StringToAttributeConversionHelper
-import org.apache.spark.sql.functions.{col, explode, from_json, lit, split}
+import org.apache.spark.sql.functions.{col, explode, from_json, lit, regexp_extract, split}
 import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
@@ -42,7 +42,9 @@ object Main {
         .contains("http") || col("url").contains("https"))
     val decoded_domain = filtered_domains
       .selectExpr("*", "reflect('java.net.URLDecoder','decode', url, 'utf-8') as newcol")
-//    val count = decoded_domain.count()
-//    println(count)
+    // blya nu eto pizdec a ne regexp, ebanutsya mozhno
+    val regexp_domains = decoded_domain
+      .withColumn("n_url", regexp_extract(col("newcol"), "https?://(?:www\\.|)([\\w.-]+).*", 1))
+    val apply_domains = regexp_domains.select("uid", "ts", "n_url").show(20, false)
     }
 }
