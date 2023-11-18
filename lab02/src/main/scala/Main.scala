@@ -1,13 +1,11 @@
-import org.apache.spark.sql.catalyst.dsl.expressions.StringToAttributeConversionHelper
-import org.apache.spark.sql.functions.{col, count, desc, explode, from_json, lit, regexp_extract, split, sum, udf, when}
-import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
-import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.functions.{asc, coalesce, col, count, desc, explode, isnull, pow, regexp_extract, round, sum, udf, when}
+import org.apache.spark.sql.types.{ArrayType, DecimalType, StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 
 import java.net.{URL, URLDecoder}
 import scala.util.Try
-import java.net.URLDecoder
-import scala.util.{Failure, Success, Try}
+//import scala.util.{Failure, Success, Try}
 
 
 object Main {
@@ -58,22 +56,48 @@ object Main {
       .withColumn("domain", regexp_extract(col("url"), "(?:www\\.|)([\\w.-]+).*", 1))
 //    regexp_domains.show(false)
     val users_domains : DataFrame = regexp_domains.select("uid", "domain")
-    /*** 6571047 domains number ***/
-    val union_table = users_domains.join(users_split, users_domains("uid") === users_split("autousers"), "left").distinct()
+
+    /*** 6571047 domains number
+     * domains with auto-russia = 112982 println(users_domains.where(col("domain") === "avto-russia.ru").count())
+    ***/
+
+    val union_table = users_domains
+      .join(users_split, users_domains("uid") === users_split("autousers"), "left")
       .select("*")
+
     val matched_table = union_table
       .withColumn("nums", when(col("autousers").isNull or col("autousers") === "", 0)
         .otherwise(1))
       .select("domain", "nums")
-//    matched_table.show(200)
+
+    val number_drivers = matched_table.filter(col("nums") === "1").count()
+//    println(number_drivers)
+
     val grouped = matched_table
       .groupBy(col("domain"))
       .agg(sum(col("nums")).as("sum"),
         count(col("domain")).as("count"))
-    grouped.orderBy("domain").show(100)
 
-    /*** Start counting of the users ***/
-//    val domen_counter = union_table.groupBy("domain").count()
-//    domen_counter.show()
+    val relevance = grouped.withColumn("relevance",
+        round(pow(col("sum"), 2)
+          / (col("count") * number_drivers), 20))
+//      .drop("domain", "count", "sum")
+//      .withColumnRenamed("domain_x_driver", "relevance")
+      .orderBy(desc("relevance"), asc("domain"))
+      .withColumn("relevance", col("relevance")
+        .cast(DecimalType(21, 15))
+        .cast(StringType))
+//      .show(100, false)
+//    println(relevance.filter(col("relevance").isNull).count())
+
+    val file_relevance = relevance.select("domain", "relevance")
+
+    file_relevance.limit(200)
+      .coalesce(1)
+      .write
+      .option("header", "false")
+      .option("sep", "\t")
+      .mode("overwrite")
+      .csv("laba02_domains.txt")
     }
 }
