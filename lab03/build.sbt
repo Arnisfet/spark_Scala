@@ -1,10 +1,15 @@
-val sparkVersion = "2.4.7"
-//val scalaVersion = "2.11.12"
-val scalaTestVersion  = "3.2.16"
+name := "data_mart"
 
-libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql" % sparkVersion,
-  "org.scalactic" %% "scalactic" % scalaTestVersion % "test",
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-)
+version := "0.1"
+
+scalaVersion := "2.11.12"
+
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.5"
+
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.5"
+
+libraryDependencies += "org.elasticsearch" %% "elasticsearch-spark-20" % "6.8.9"
+
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.4.3"
+
+libraryDependencies += "org.postgresql" % "postgresql" % "42.2.12"
